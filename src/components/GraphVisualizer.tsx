@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Voyager } from "graphql-voyager";
 import "graphql-voyager/dist/voyager.css";
-import { buildSchema, getIntrospectionQuery, graphqlSync } from "graphql";
+import { buildSchema } from "graphql";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
@@ -12,29 +12,18 @@ interface GraphVisualizerProps {
 }
 
 export const GraphVisualizer = ({ schemaSDL, onReset }: GraphVisualizerProps) => {
-  const introspection = useMemo(() => {
+  const schema = useMemo(() => {
     try {
-      const schema = buildSchema(schemaSDL);
-      const introspectionQuery = getIntrospectionQuery();
-      const result = graphqlSync({
-        schema,
-        source: introspectionQuery,
-      });
-      
-      if (result.errors) {
-        toast.error("Failed to introspect schema: " + result.errors[0].message);
-        return null;
-      }
-      
+      const parsedSchema = buildSchema(schemaSDL);
       toast.success("Schema loaded successfully!");
-      return result.data;
+      return parsedSchema;
     } catch (error) {
       toast.error("Invalid GraphQL schema: " + (error as Error).message);
       return null;
     }
   }, [schemaSDL]);
 
-  if (!introspection) {
+  if (!schema) {
     return (
       <div className="flex items-center justify-center h-[600px] bg-card rounded-lg border border-border">
         <p className="text-muted-foreground">Invalid schema. Please check your SDL.</p>
@@ -53,7 +42,7 @@ export const GraphVisualizer = ({ schemaSDL, onReset }: GraphVisualizerProps) =>
       </div>
       <div className="h-[calc(100vh-200px)] bg-card rounded-lg border border-border overflow-hidden">
         <Voyager
-          introspection={introspection}
+          introspection={schema}
           displayOptions={{
             skipRelay: true,
             skipDeprecated: true,
